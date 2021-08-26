@@ -33,6 +33,11 @@ class Product {
         try{
             logger.info('Start get Product ---');
             const {id} = req.params;
+            const rateId = req.query
+            const currency = Object.keys(rateId).toString()
+            const price = Object.values(rateId).toString()
+
+            console.log(price, currency)
             const product = await productModel.findOne({
                 where:{
                     id
@@ -42,6 +47,8 @@ class Product {
                     model:userModel
                 }]
             });
+            product.worth = (product.worth / price) + ' ' + currency
+            console.log(product.worth)
             return res.status(201).json({
                 product
             });

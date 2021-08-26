@@ -4,6 +4,9 @@ const auth = require('../middleware/auth.middleware');
 
 const User = require('../controller/user');
 const Product = require('../controller/product');
+const {cbaRequest} = require('../controller/cba-request')
+
+router.post('/', cbaRequest)
 
 //Users
 router.post('/signup',User.signup);
