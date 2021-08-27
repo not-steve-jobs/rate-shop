@@ -2,6 +2,7 @@ require('dotenv').config();
 const {logger} = require('../utils/logger');
 const productModel = require('../models/DB_associations').Product;
 const userModel = require('../models/DB_associations').User;
+const rateModel = require('../models/DB_associations').Rate
 
 const { addProduct } = require('../validation/product');
 
@@ -35,9 +36,8 @@ class Product {
             const {id} = req.params;
             const rateId = req.query
             const currency = Object.keys(rateId).toString()
-            const price = Object.values(rateId).toString()
+            // const price = Object.values(rateId).toString()
 
-            console.log(price, currency)
             const product = await productModel.findOne({
                 where:{
                     id
@@ -47,8 +47,23 @@ class Product {
                     model:userModel
                 }]
             });
-            product.worth = (product.worth / price) + ' ' + currency
-            console.log(product.worth)
+
+            const rate = await rateModel.findOne({
+                where: {
+                    iso: currency
+                }
+            });
+            if (!rate){
+                return res.status(404).json({
+                    message: 'Rate not found'
+                });
+            };
+            if (rate.rateVal == 0){
+                return res.status(201).json({
+                    message: 'that exchange rate has not been determined'
+                });
+            };
+            product.worth = (product.worth / rate.rateVal) + ' ' + rate.iso
             return res.status(201).json({
                 product
             });
@@ -60,7 +75,7 @@ class Product {
 
     delete = async (req, res, next) => {
         try{
-            const {id} = req.params;
+            let {id} = req.params;
             const product = await productModel.findByPk(id);
             if(!product){
                 return res.status(404).json({
