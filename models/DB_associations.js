@@ -20,25 +20,6 @@ Product.belongsTo(User,{
     onUpdate: 'CASCADE',
 });
 
-// Product to Rate connect
-// Product.hasMany(Rate,{
-//     foreignKey: {
-//         name: 'rate_id',
-//         allowNull: false
-//     },
-//     onDelete: 'CASCADE',
-//     onUpdate: 'CASCADE',
-// });
-//
-// Rate.belongsTo(Product,{
-//     foreignKey: {
-//         name: 'rate_id',
-//         allowNull: false
-//     },
-//     onDelete: 'CASCADE',
-//     onUpdate: 'CASCADE',
-// });
-
 const DB = {
     User,
     Product,
