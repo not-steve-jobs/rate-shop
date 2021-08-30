@@ -3,7 +3,8 @@ const {logger} = require('../utils/logger');
 const productModel = require('../models/DB_associations').Product;
 const userModel = require('../models/DB_associations').User;
 const rateModel = require('../models/DB_associations').Rate
-
+const redis = require('redis');
+const client = redis.createClient(6379);
 const { addProduct } = require('../validation/product');
 
 class Product {
@@ -34,43 +35,51 @@ class Product {
         try{
             logger.info('Start get Product ---');
             const {id} = req.params;
-            const rateId = req.query
-            const currency = Object.keys(rateId).toString()
-            // const price = Object.values(rateId).toString()
-
-            const product = await productModel.findOne({
-                where:{
-                    id
-                },
-                include: [{
-                    required:true,
-                    model:userModel
-                }]
+            client.get("key", (err, data) => {
+                const clientValue = JSON.parse(data);
+                async function getPriceInCache (){
+                    const currency = Object.keys(req.query).toString();
+                    let rate;
+                    const product = await productModel.findOne({
+                        where:{
+                            id
+                        },
+                        include: [{
+                            required:true,
+                            model:userModel
+                        }]
+                    });
+                    for (let i in clientValue){
+                        if (i === currency || i === currency.toUpperCase()){
+                            rate = {
+                                iso: i,
+                                rateVal: clientValue[i]
+                            };
+                            break
+                        };
+                    };
+                    if (!rate){
+                        return res.status(404).json({
+                            message: 'Rate not found'
+                        });
+                    };
+                    if (rate.rateVal === 0){
+                        return res.status(201).json({
+                            message: 'that exchange rate has not been determined'
+                        });
+                    };
+                    product.worth = (product.worth / rate.rateVal).toFixed(2) + ' ' + rate.iso
+                    return res.status(201).json({
+                        product
+                    });
+                };
+                getPriceInCache();
             });
 
-            const rate = await rateModel.findOne({
-                where: {
-                    iso: currency
-                }
-            });
-            if (!rate){
-                return res.status(404).json({
-                    message: 'Rate not found'
-                });
-            };
-            if (rate.rateVal == 0){
-                return res.status(201).json({
-                    message: 'that exchange rate has not been determined'
-                });
-            };
-            product.worth = (product.worth / rate.rateVal) + ' ' + rate.iso
-            return res.status(201).json({
-                product
-            });
         } catch (e) {
             logger.error(`Product Get Error: ${e.message}`);
             next(e)
-        }
+        };
     };
 
     delete = async (req, res, next) => {
