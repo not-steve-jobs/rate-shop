@@ -2,7 +2,6 @@ require('dotenv').config();
 const {logger} = require('../utils/logger');
 const productModel = require('../models/DB_associations').Product;
 const userModel = require('../models/DB_associations').User;
-const rateModel = require('../models/DB_associations').Rate
 const redis = require('redis');
 const client = redis.createClient(6379);
 const { addProduct } = require('../validation/product');
